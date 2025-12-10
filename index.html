@@ -100,7 +100,9 @@
                                 const credStatus = cleanCols[3] || ""; 
                                 
                                 if (id) {
-                                    if (credStatus.toLowerCase().includes("active")) {
+                                    // Remove "inactive" from the string first, then check for "active"
+                                    // This prevents "Inactive" from matching, but allows "Inactive Active" to pass
+                                    if (credStatus.toLowerCase().replace(/inactive/g, '').includes("active")) {
                                         data.push({ id, name: `${lastName}, ${firstName}` });
                                     } else {
                                         skipped++;
