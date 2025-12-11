@@ -510,19 +510,23 @@
                         // Skip Header
                         for (let i = 1; i < rows.length; i++) {
                             // Column A: Date/Time (index 0)
+                            // Column B: Node Date/Time (index 1) - ignored
                             // Column C: Location (index 2)
+                            // Column D: Description (index 3)
                             const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                             const cleanCols = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : '');
                             
+                            // Check for minimum columns. We need up to D ideally, but code checks A and C mainly.
                             if (cleanCols.length < 3) continue;
 
                             const timeStr = cleanCols[0];
                             const location = cleanCols[2];
+                            const description = cleanCols[3] || "";
 
                             if (timeStr) {
                                 const dateObj = new Date(timeStr);
                                 if (!isNaN(dateObj.getTime())) {
-                                    allEvents.push({ dateObj, location });
+                                    allEvents.push({ dateObj, location, description });
                                 }
                             }
                         }
@@ -557,8 +561,10 @@
                             date: day,
                             firstTime: first.dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                             firstLoc: first.location,
+                            firstDesc: first.description,
                             lastTime: last.dateObj.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
                             lastLoc: last.location,
+                            lastDesc: last.description,
                             duration: `${hours}h ${minutes}m`,
                             fullDate: first.dateObj.toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
                         };
@@ -576,10 +582,10 @@
 
             const downloadCSV = () => {
                 if (!dailyData) return;
-                const headers = ["Date", "First Swipe Time", "First Swipe Location", "Last Swipe Time", "Last Swipe Location", "Duration"];
+                const headers = ["Date", "First Swipe Time", "First Swipe Location", "First Swipe Description", "Last Swipe Time", "Last Swipe Location", "Last Swipe Description", "Duration"];
                 const csvContent = [
                     headers.join(','),
-                    ...dailyData.map(d => `"${d.date}","${d.firstTime}","${d.firstLoc}","${d.lastTime}","${d.lastLoc}","${d.duration}"`)
+                    ...dailyData.map(d => `"${d.date}","${d.firstTime}","${d.firstLoc}","${d.firstDesc}","${d.lastTime}","${d.lastLoc}","${d.lastDesc}","${d.duration}"`)
                 ].join('\n');
 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -610,7 +616,7 @@
                             <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full">
                                 <div className="bg-blue-100 p-4 rounded-full mb-4"><HistoryIcon className="w-8 h-8 text-blue-600" /></div>
                                 <span className="text-lg font-medium text-gray-700">{loading ? 'Processing...' : 'Click to Upload CSV Files'}</span>
-                                <span className="text-sm text-gray-500 mt-2 text-center">Supports multiple .csv files<br/>(Col A: Date/Time, Col C: Location)</span>
+                                <span className="text-sm text-gray-500 mt-2 text-center">Supports multiple .csv files<br/>(Col A: Date/Time, Col B: Node Date/Time, Col C: Location, Col D: Description)</span>
                                 <span className="text-xs text-gray-400 mt-1">Assumes data is for a single individual</span>
                                 <input type="file" multiple accept=".csv" className="hidden" onChange={(e) => e.target.files?.length > 0 && processFiles(e.target.files)} />
                             </label>
