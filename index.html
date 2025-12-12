@@ -513,17 +513,18 @@
                         for (let i = 1; i < rows.length; i++) {
                             // Column A: Date/Time (index 0)
                             // Column B: Node Date/Time (index 1) - ignored
-                            // Column C: Location (index 2)
-                            // Column D: Description (index 3)
+                            // Column C: Description/Name (index 2) - was previously mapped to Location
+                            // Column D: Location (index 3) - was previously mapped to Description
                             const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                             const cleanCols = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : '');
                             
-                            // Check for minimum columns. We need up to D ideally, but code checks A and C mainly.
+                            // Check for minimum columns.
                             if (cleanCols.length < 3) continue;
 
                             const timeStr = cleanCols[0];
-                            const location = cleanCols[2];
-                            const description = cleanCols[3] || "";
+                            // Swapping based on user feedback: Col C is Name, Col D is Location
+                            const location = cleanCols[3] || ""; 
+                            const description = cleanCols[2];
 
                             if (timeStr) {
                                 const dateObj = new Date(timeStr);
@@ -651,7 +652,7 @@
                             <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full">
                                 <div className="bg-blue-100 p-4 rounded-full mb-4"><HistoryIcon className="w-8 h-8 text-blue-600" /></div>
                                 <span className="text-lg font-medium text-gray-700">{loading ? 'Processing...' : 'Click to Upload CSV Files'}</span>
-                                <span className="text-sm text-gray-500 mt-2 text-center">Supports multiple .csv files<br/>(Col A: Date/Time, Col B: Node Date/Time, Col C: Location, Col D: Description)</span>
+                                <span className="text-sm text-gray-500 mt-2 text-center">Supports multiple .csv files<br/>(Col A: Date/Time, Col B: Node Date/Time, Col C: Desc/Name, Col D: Location)</span>
                                 <span className="text-xs text-gray-400 mt-1">Assumes data is for a single individual</span>
                                 <input type="file" multiple accept=".csv" className="hidden" onChange={(e) => e.target.files?.length > 0 && processFiles(e.target.files)} />
                             </label>
