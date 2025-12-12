@@ -561,9 +561,9 @@
                         
                         let durationMs = last.dateObj - first.dateObj;
 
-                        // LOGIC CHANGE: If last swipe is "BW1-UN-1-(NEW)", add 1 hour
+                        // LOGIC CHANGE: If last swipe is "BW1-UN-1-(NEW)", add 1.5 hours
                         if (last.location && last.location.trim() === 'BW1-UN-1-(NEW)') {
-                             durationMs += (60 * 60 * 1000); // Add 1 hour
+                             durationMs += (1.5 * 60 * 60 * 1000); // Add 1.5 hours
                         }
 
                         const hours = Math.floor(durationMs / (1000 * 60 * 60));
