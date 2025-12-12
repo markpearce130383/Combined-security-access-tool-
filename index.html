@@ -518,7 +518,7 @@
                             const cols = rows[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                             const cleanCols = cols.map(c => c ? c.replace(/^"|"$/g, '').trim() : '');
                             
-                            // Check for minimum columns.
+                            // Check for minimum columns. We need up to D ideally, but code checks A and C mainly.
                             if (cleanCols.length < 3) continue;
 
                             const timeStr = cleanCols[0];
@@ -552,6 +552,7 @@
 
                     // Calculate Daily Stats and Running Balance
                     let totalBalanceMs = 0;
+                    let accumulatedDurationMs = 0;
 
                     const processedDays = Object.keys(days).map(day => {
                         const dayEvents = days[day].events;
@@ -562,6 +563,8 @@
                         const hours = Math.floor(durationMs / (1000 * 60 * 60));
                         const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
                         
+                        accumulatedDurationMs += durationMs;
+
                         // Calculate Work Balance
                         const dayOfWeek = first.dateObj.getDay(); // 0-6 (Sun-Sat)
                         let expectedMs = 0;
@@ -597,9 +600,19 @@
                     const sign = totalBalanceMs >= 0 ? '+' : '-';
                     const balanceString = `${sign}${bHours}h ${bMinutes}m`;
 
+                    // Format Average
+                    let averageString = "0h 0m";
+                    if (processedDays.length > 0) {
+                        const avgMs = accumulatedDurationMs / processedDays.length;
+                        const aHours = Math.floor(avgMs / (1000 * 60 * 60));
+                        const aMinutes = Math.floor((avgMs % (1000 * 60 * 60)) / (1000 * 60));
+                        averageString = `${aHours}h ${aMinutes}m`;
+                    }
+
                     setTotalBalance({
                         text: balanceString,
-                        isPositive: totalBalanceMs >= 0
+                        isPositive: totalBalanceMs >= 0,
+                        average: averageString
                     });
                     setDailyData(processedDays);
 
@@ -622,6 +635,7 @@
                 // Append Summary
                 if (totalBalance) {
                     csvContent += `\n"TOTAL BALANCE (vs Target)",,,,,,,${totalBalance.text}`;
+                    csvContent += `\n"AVERAGE TIME ONSITE",,,,,,,${totalBalance.average}`;
                 }
 
                 const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -651,7 +665,7 @@
                         <Card className="p-8 border-dashed border-2 border-gray-300 bg-gray-50 hover:bg-white transition-colors">
                             <label className="flex flex-col items-center justify-center cursor-pointer w-full h-full">
                                 <div className="bg-blue-100 p-4 rounded-full mb-4"><HistoryIcon className="w-8 h-8 text-blue-600" /></div>
-                                <span className="text-lg font-medium text-gray-700">{loading ? 'Processing...' : 'Click to Upload CSV Files'}</span>
+                                <span className="text-lg font-medium text-gray-700">{loading ? 'Processing...' : 'Upload Access History Report'}</span>
                                 <span className="text-sm text-gray-500 mt-2 text-center">Supports multiple .csv files<br/>(Col A: Date/Time, Col B: Node Date/Time, Col C: Desc/Name, Col D: Location)</span>
                                 <span className="text-xs text-gray-400 mt-1">Assumes data is for a single individual</span>
                                 <input type="file" multiple accept=".csv" className="hidden" onChange={(e) => e.target.files?.length > 0 && processFiles(e.target.files)} />
@@ -696,12 +710,20 @@
                                                 </tr>
                                             ))}
                                             {totalBalance && (
-                                                <tr className="bg-gray-50 border-t-2 border-gray-200">
-                                                    <td colSpan="5" className="p-4 font-bold text-right text-gray-700 uppercase text-xs tracking-wider">Total Time Balance (vs Target):</td>
-                                                    <td className={`p-4 font-bold text-lg ${totalBalance.isPositive ? 'text-green-600' : 'text-red-600'}`}>
-                                                        {totalBalance.text}
-                                                    </td>
-                                                </tr>
+                                                <>
+                                                    <tr className="bg-gray-50 border-t-2 border-gray-200">
+                                                        <td colSpan="5" className="p-4 font-bold text-right text-gray-700 uppercase text-xs tracking-wider">Total Time Balance (vs Target):</td>
+                                                        <td className={`p-4 font-bold text-lg ${totalBalance.isPositive ? 'text-green-600' : 'text-red-600'}`}>
+                                                            {totalBalance.text}
+                                                        </td>
+                                                    </tr>
+                                                    <tr className="bg-gray-50 border-t border-gray-100">
+                                                        <td colSpan="5" className="p-4 font-bold text-right text-gray-600 uppercase text-xs tracking-wider">Average Time Onsite:</td>
+                                                        <td className="p-4 font-bold text-lg text-gray-800">
+                                                            {totalBalance.average}
+                                                        </td>
+                                                    </tr>
+                                                </>
                                             )}
                                         </tbody>
                                     </table>
